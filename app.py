@@ -153,12 +153,12 @@ Here is the text from the PDF file for the monograph titled "{filename}":
                 response = requests.post(API_URL, headers=headers, data=json.dumps(payload), timeout=120)
                 response.raise_for_status()
                 break  # Exit loop on success
-            exce# Retry on rate limit (429) or service unavailable (503)
+            except requests.exceptions.HTTPError as e:
+                # Retry on rate limit (429) or service unavailable (503)
                 if e.response.status_code in [429, 503] and retries < max_retries - 1:
                     wait_time = 2 ** retries
                     error_name = "Rate limit exceeded" if e.response.status_code == 429 else "Service unavailable"
-                    print(f"{error_name}. Retrying in {wait_time} seconds... (attempt {retries + 1}/{max_retries})
-                    print(f"Rate limit exceeded. Retrying in {wait_time} seconds...")
+                    print(f"{error_name}. Retrying in {wait_time} seconds... (attempt {retries + 1}/{max_retries})")
                     time.sleep(wait_time)
                     retries += 1
                 else:
