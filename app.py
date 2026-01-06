@@ -1,7 +1,8 @@
 import os
 import tempfile
-from flask import Flask, render_template, request, send_file, jsonify, flash, redirect, url_for
+from flask import Flask, render_template, request, send_file, jsonify, flash, redirect, url_for, session
 from werkzeug.utils import secure_filename
+from functools import wraps
 import fitz  # PyMuPDF
 import requests
 import json
@@ -12,10 +13,23 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-i
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 app.config['UPLOAD_FOLDER'] = tempfile.gettempdir()
 
+# Login credentials - Change these or set via environment variables
+USERNAME = os.environ.get('APP_USERNAME', 'admin')
+PASSWORD = os.environ.get('APP_PASSWORD', 'password123')
+
 # Get port from environment variable for deployment
 PORT = int(os.environ.get('PORT', 5000))
 
 ALLOWED_EXTENSIONS = {'pdf'}
+
+# Login required decorator
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'logged_in' not in session:
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
 
 # Get API key from environment variable (set in Render dashboard)
 API_KEY = os.environ.get('GEMINI_API_KEY', 'AIzaSyDQU6A8ovEJAMsBR1dMfNephqVobois-rc')
@@ -155,12 +169,36 @@ Here is the text from the PDF file for the monograph titled "{filename}":
         print(f"Error generating HTML for {filename}: {e}")
         return None
 
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    """Handle user login."""
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        
+        if username == USERNAME and password == PASSWORD:
+            session['logged_in'] = True
+            session['username'] = username
+            return redirect(url_for('index'))
+        else:
+            return render_template('login.html', error='Invalid credentials')
+    
+    return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    """Handle user logout."""
+    session.clear()
+    return redirect(url_for('login'))
+
 @app.route('/')
+@login_required
 def index():
     """Render the main page with the upload form."""
     return render_template('index.html')
 
 @app.route('/upload', methods=['POST'])
+@login_required
 def upload_file():
     """Handle PDF upload and translation."""
     if 'file' not in request.files:
@@ -212,6 +250,7 @@ def upload_file():
         return jsonify({'error': f'Error processing file: {str(e)}'}), 500
 
 @app.route('/download/<filename>')
+@login_required
 def download_file(filename):
     """Download the translated HTML file."""
     try:
