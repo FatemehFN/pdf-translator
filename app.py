@@ -149,7 +149,7 @@ Here is the text from the PDF file for the monograph titled "{filename}":
         max_retries = 5
         while retries < max_retries:
             try:
-                response = requests.post(API_URL, headers=headers, data=json.dumps(payload))
+                response = requests.post(API_URL, headers=headers, data=json.dumps(payload), timeout=120)
                 response.raise_for_status()
                 break  # Exit loop on success
             except requests.exceptions.HTTPError as e:
@@ -159,6 +159,8 @@ Here is the text from the PDF file for the monograph titled "{filename}":
                     time.sleep(wait_time)
                     retries += 1
                 else:
+                    print(f"HTTP Error: {e}")
+                    print(f"Response: {e.response.content.decode('utf-8') if e.response else 'No response'}")
                     raise e
         
         candidates = response.json().get('candidates', [])
@@ -172,17 +174,25 @@ Here is the text from the PDF file for the monograph titled "{filename}":
                     generated_text = generated_text[:-len("```")].strip()
                 return generated_text
             else:
-                print(f"No text content found in API response for {filename}.")
+                error_msg = f"No text content found in API response for {filename}."
+                print(error_msg)
                 return None
         else:
-            print(f"No candidates found in API response for {filename}.")
+            error_msg = f"No candidates found in API response. Response: {response.json()}"
+            print(error_msg)
             return None
+    except requests.exceptions.Timeout:
+        print(f"Timeout error generating HTML for {filename}")
+        return None
     except requests.exceptions.HTTPError as e:
         print(f"HTTP Error generating HTML for {filename}: {e}")
-        print(f"Response content: {response.content.decode('utf-8')}")
+        if hasattr(e, 'response') and e.response is not None:
+            print(f"Response content: {e.response.content.decode('utf-8')}")
         return None
     except Exception as e:
         print(f"Error generating HTML for {filename}: {e}")
+        import traceback
+        traceback.print_exc()
         return None
 
 @app.route('/login', methods=['GET', 'POST'])
