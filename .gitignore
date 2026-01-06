@@ -27,3 +27,4 @@ Thumbs.db
 
 # Don't push these files
 withGemini.py
+withGeminiGeneralChapters.py
