@@ -33,7 +33,8 @@ def login_required(f):
 
 # Get API key from environment variable (set in Render dashboard)
 API_KEY = os.environ.get('GEMINI_API_KEY', 'AIzaSyDQU6A8ovEJAMsBR1dMfNephqVobois-rc')
-API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key={API_KEY}"
+# Use more stable model
+API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={API_KEY}"
 
 def allowed_file(filename):
     """Check if file has an allowed extension."""
@@ -152,9 +153,11 @@ Here is the text from the PDF file for the monograph titled "{filename}":
                 response = requests.post(API_URL, headers=headers, data=json.dumps(payload), timeout=120)
                 response.raise_for_status()
                 break  # Exit loop on success
-            except requests.exceptions.HTTPError as e:
-                if e.response.status_code == 429 and retries < max_retries - 1:
+            exce# Retry on rate limit (429) or service unavailable (503)
+                if e.response.status_code in [429, 503] and retries < max_retries - 1:
                     wait_time = 2 ** retries
+                    error_name = "Rate limit exceeded" if e.response.status_code == 429 else "Service unavailable"
+                    print(f"{error_name}. Retrying in {wait_time} seconds... (attempt {retries + 1}/{max_retries})
                     print(f"Rate limit exceeded. Retrying in {wait_time} seconds...")
                     time.sleep(wait_time)
                     retries += 1
