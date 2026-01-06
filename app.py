@@ -33,8 +33,8 @@ def login_required(f):
 
 # Get API key from environment variable (set in Render dashboard)
 API_KEY = os.environ.get('GEMINI_API_KEY', 'AIzaSyDQU6A8ovEJAMsBR1dMfNephqVobois-rc')
-# Use more stable model
-API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={API_KEY}"
+# Use the v1 API endpoint with correct model name
+API_URL = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key={API_KEY}"
 
 def allowed_file(filename):
     """Check if file has an allowed extension."""
