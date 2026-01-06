@@ -230,7 +230,13 @@
                     body: formData
                 });
 
-                const data = await response.json();
+                let data;
+                try {
+                    data = await response.json();
+                } catch (parseError) {
+                    // If JSON parsing fails, the server returned HTML (error page)
+                    throw new Error('Server error - please try again or contact administrator');
+                }
 
                 if (response.ok && data.success) {
                     progressSection.classList.add('hidden');
@@ -240,7 +246,7 @@
                     showError(data.error || 'An error occurred during translation');
                 }
             } catch (error) {
-                showError('Network error: ' + error.message);
+                showError(error.message || 'An unexpected error occurred');
             } finally {
                 progressSection.classList.add('hidden');
                 translateBtn.disabled = false;

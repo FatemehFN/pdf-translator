@@ -39,6 +39,22 @@ def allowed_file(filename):
     """Check if file has an allowed extension."""
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+@app.errorhandler(413)
+def too_large(e):
+    """Handle file too large errors."""
+    return jsonify({'error': 'File is too large. Maximum size is 16MB.'}), 413
+
+@app.errorhandler(500)
+def internal_error(e):
+    """Handle internal server errors."""
+    return jsonify({'error': 'Internal server error. Please try again.'}), 500
+
+@app.errorhandler(Exception)
+def handle_exception(e):
+    """Handle all other exceptions."""
+    print(f"Unhandled exception: {e}")
+    return jsonify({'error': f'An error occurred: {str(e)}'}), 500
+
 def get_text_from_pdf(pdf_path):
     """
     Extracts text from a PDF file using PyMuPDF.
