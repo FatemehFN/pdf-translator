@@ -17,8 +17,8 @@ PORT = int(os.environ.get('PORT', 5000))
 
 ALLOWED_EXTENSIONS = {'pdf'}
 
-# IMPORTANT: Leave the API key as an empty string. The environment will provide it.
-API_KEY = "AIzaSyDQU6A8ovEJAMsBR1dMfNephqVobois-rc"
+# Get API key from environment variable (set in Render dashboard)
+API_KEY = os.environ.get('GEMINI_API_KEY', 'AIzaSyDQU6A8ovEJAMsBR1dMfNephqVobois-rc')
 API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key={API_KEY}"
 
 def allowed_file(filename):
