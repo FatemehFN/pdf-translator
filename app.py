@@ -31,8 +31,10 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# Get API key from environment variable (set in Render dashboard)
-API_KEY = os.environ.get('GEMINI_API_KEY', 'AIzaSyDQU6A8ovEJAMsBR1dMfNephqVobois-rc')
+# Get API key from environment variable (REQUIRED - set in Render dashboard)
+API_KEY = os.environ.get('GEMINI_API_KEY')
+if not API_KEY:
+    raise ValueError("GEMINI_API_KEY environment variable is required but not set")
 # Use the v1 API endpoint with correct model name
 API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key={API_KEY}"
 
